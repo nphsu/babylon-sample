@@ -21,57 +21,115 @@
             }
         </style>
 
+        <!-- Babylon.js -->
+        <script src="https://code.jquery.com/pep/0.4.2/pep.min.js"></script>
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/dat-gui/0.6.2/dat.gui.min.js"></script>
+        <script src="https://preview.babylonjs.com/ammo.js"></script>
+        <script src="https://preview.babylonjs.com/cannon.js"></script>
+        <script src="https://preview.babylonjs.com/Oimo.js"></script>
+        <script src="https://preview.babylonjs.com/gltf_validator.js"></script>
+        <script src="https://preview.babylonjs.com/earcut.min.js"></script>
         <script src="https://preview.babylonjs.com/babylon.js"></script>
-        <script src="https://preview.babylonjs.com/loaders/babylonjs.loaders.min.js"></script>
-        <script src="https://code.jquery.com/pep/0.4.3/pep.js"></script>
+        <script src="https://preview.babylonjs.com/inspector/babylon.inspector.bundle.js"></script>
+        <script src="https://preview.babylonjs.com/materialsLibrary/babylonjs.materials.min.js"></script>
+        <script src="https://preview.babylonjs.com/proceduralTexturesLibrary/babylonjs.proceduralTextures.min.js"></script>
+        <script src="https://preview.babylonjs.com/postProcessesLibrary/babylonjs.postProcess.min.js"></script>
+        <script src="https://preview.babylonjs.com/loaders/babylonjs.loaders.js"></script>
+        <script src="https://preview.babylonjs.com/serializers/babylonjs.serializers.min.js"></script>
+        <script src="https://preview.babylonjs.com/gui/babylon.gui.min.js"></script>
     </head>
 
    <body>
-
-    <canvas id="renderCanvas" touch-action="none"></canvas> //touch-action="none" for best results from PEP
-
+    <canvas id="renderCanvas"></canvas>
     <script>
-        var canvas = document.getElementById("renderCanvas"); // Get the canvas element 
-        var engine = new BABYLON.Engine(canvas, true); // Generate the BABYLON 3D engine
+        var canvas = document.getElementById("renderCanvas");
 
-        /******* Add the create scene function ******/
-        var createScene = function () {
-
-            // Create the scene space
+        var createScene = function (engine) {
             var scene = new BABYLON.Scene(engine);
-
-            // Add a camera to the scene and attach it to the canvas
-            var camera = new BABYLON.ArcRotateCamera("Camera", Math.PI / 2, Math.PI / 2, 2, new BABYLON.Vector3(0,0,5), scene);
+        
+            // Camera
+            var camera = new BABYLON.ArcRotateCamera("Camera", 3 * Math.PI / 2, Math.PI / 2.5, 50, BABYLON.Vector3.Zero(), scene);
             camera.attachControl(canvas, true);
-
-            // Add lights to the scene
-            var light1 = new BABYLON.HemisphericLight("light1", new BABYLON.Vector3(1, 1, 0), scene);
-            var light2 = new BABYLON.PointLight("light2", new BABYLON.Vector3(0, 1, -1), scene);
-
-            // Add and manipulate meshes in the scene
-            // var sphere = BABYLON.MeshBuilder.CreateSphere("sphere", {diameter:2}, scene);
-            // sphere.alpha = 0.5;
-            let redMat = new BABYLON.StandardMaterial("redMat", scene)
-            redMat.diffuseColor = new BABYLON.Color3(0, 1, 0)
-            redMat.alpha = 0.5;
-            redMat.wireframe = true;
-            let sphere1 = BABYLON.MeshBuilder.CreateSphere("sphere1", {}, scene)
-            sphere1.material = redMat
-
+            
+            // Light
+            var light = new BABYLON.HemisphericLight("light1", new BABYLON.Vector3(0, 1, 0), scene);
+        
+            // Skybox
+            var skybox = BABYLON.Mesh.CreateBox("skyBox", 5000.0, scene);
+            var skyboxMaterial = new BABYLON.StandardMaterial("skyBox", scene);
+            skyboxMaterial.backFaceCulling = false;
+            skyboxMaterial.reflectionTexture = new BABYLON.CubeTexture("//www.babylonjs.com/assets/skybox/TropicalSunnyDay", scene);
+            skyboxMaterial.reflectionTexture.coordinatesMode = BABYLON.Texture.SKYBOX_MODE;
+            skyboxMaterial.diffuseColor = new BABYLON.Color3(0, 0, 0);
+            skyboxMaterial.specularColor = new BABYLON.Color3(0, 0, 0);
+            skyboxMaterial.disableLighting = true;
+            skybox.material = skyboxMaterial;
+        
+            // Water material
+            var waterMaterial = new BABYLON.WaterMaterial("waterMaterial", scene, new BABYLON.Vector2(512, 512));
+            waterMaterial.bumpTexture = new BABYLON.Texture("//www.babylonjs.com/assets/waterbump.png", scene);
+            waterMaterial.windForce = -10;
+            waterMaterial.waveHeight = 0.5;
+            waterMaterial.bumpHeight = 0.1;
+            waterMaterial.waveLength = 0.1;
+            waterMaterial.waveSpeed = 50.0;
+            waterMaterial.colorBlendFactor = 0;
+            waterMaterial.windDirection = new BABYLON.Vector2(1, 1);
+            waterMaterial.colorBlendFactor = 0;
+        
+            // Ground
+            var groundTexture = new BABYLON.Texture("//www.babylonjs.com/assets/sand.jpg", scene);
+            groundTexture.vScale = groundTexture.uScale = 4.0;
+        
+            var groundMaterial = new BABYLON.StandardMaterial("groundMaterial", scene);
+            groundMaterial.diffuseTexture = groundTexture;
+        
+            var ground = BABYLON.Mesh.CreateGround("ground", 512, 512, 32, scene, false);
+            ground.position.y = -1;
+            ground.material = groundMaterial;
+        
+            // Water mesh
+            var waterMesh = BABYLON.Mesh.CreateGround("waterMesh", 512, 512, 32, scene, false);
+            waterMesh.material = waterMaterial;
+        
+            // Sphere
+            var sphereMaterial = new BABYLON.StandardMaterial("sphereMaterial", scene);
+            sphereMaterial.diffuseTexture = new BABYLON.Texture("//www.babylonjs.com/assets/wood.jpg", scene);
+        
+            var sphere = BABYLON.Mesh.CreateSphere("sphere", 16, 10, scene);
+            sphere.position.y = 20;
+            sphere.material = sphereMaterial;
+        
+            // Configure water material
+            waterMaterial.addToRenderList(ground);
+            waterMaterial.addToRenderList(skybox);
+            waterMaterial.addToRenderList(sphere);
+        
+            ////////// RAY CAST TO FIND WATER HEIGHT ////////////
+            //var angle = 0;
+            let i = 0;
+            scene.registerBeforeRender(function() {
+                let time = waterMaterial._lastTime / 100000;
+                let x = sphere.position.x;
+                let z = sphere.position.z;
+                sphere.position.y = Math.abs((Math.sin(((x / 0.05) + time * waterMaterial.waveSpeed)) * waterMaterial.waveHeight * waterMaterial.windDirection.x * 5.0) + (Math.cos(((z / 0.05) +  time * waterMaterial.waveSpeed)) * waterMaterial.waveHeight * waterMaterial.windDirection.y * 5.0));
+            });
+        
             return scene;
         };
-        /******* End of the create scene function ******/    
+        
+        var engine = new BABYLON.Engine(canvas, true, { preserveDrawingBuffer: true, stencil: true });
+        var scene = createScene();
 
-        var scene = createScene(); //Call the createScene function
-
-        // Register a render loop to repeatedly render the scene
-        engine.runRenderLoop(function () { 
+        engine.runRenderLoop(function () {
+            if (scene) {
                 scene.render();
+            }
         });
 
-        // Watch for browser/canvas resize events
-        window.addEventListener("resize", function () { 
-                engine.resize();
+        // Resize
+        window.addEventListener("resize", function () {
+            engine.resize();
         });
     </script>
 
