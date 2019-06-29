@@ -1,6 +1,5 @@
-# 11_babylon_sample
+# babylon_sample
 
-> My shining Nuxt.js project
 
 ## Build Setup
 
