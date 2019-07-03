@@ -13,7 +13,8 @@ export default {
       engine: null,
       canvas: null,
       scene: null,
-      mainCamera: null,
+      light1: null,
+      light2: null,
     }
   },
   mounted: function() {
@@ -24,45 +25,26 @@ export default {
       const _this = this
       this.canvas = this.$refs.canvas
       this.engine = new BABYLON.Engine(this.canvas, true)
-      this.scene = new BABYLON.Scene(this.engine)
-      this.mainCamera = new BABYLON.ArcRotateCamera(
-        "ArcRotateCamera",
-        1.5,
-        1.3,
-        20,
-        BABYLON.Vector3.Zero(),
-        this.scene
-      )
-      this.mainLight = new BABYLON.HemisphericLight(
-        'light1',
-        new BABYLON.Vector3(0,1,0),
-        this.scene
-      )
+      this.scene = this.createScene()
+
       this.engine.runRenderLoop(function () {
         _this.scene.render()
       })
       window.addEventListener('resize', function() {
         _this.engine.resize()
-      })
+      })        
+    },
+    createScene: function () {
+      const scene = new BABYLON.Scene(this.engine)
+      const camera = new BABYLON.ArcRotateCamera("Camera", Math.PI / 2, Math.PI / 2, 2, new BABYLON.Vector3(0, 0, 5), this.scene)
+      camera.attachControl(this.canvas, true)
 
-      // const groundTexture = new BABYLON.Texture("assets/image/sand.jpg", this.scene)
-      // groundTexture.vScale = groundTexture.uScale = 4.0
+      this.light1 = new BABYLON.HemisphericLight("light1", new BABYLON.Vector3(1, 1, 0), this.scene)
+      this.light2 = new BABYLON.PointLight("light2", new BABYLON.Vector3(0, 1, -1), this.scene)
 
-      // const groundMaterial = new BABYLON.StandardMaterial("groundMaterial", this.scene)
-      // groundMaterial.diffuseTexture = groundMaterial
-
-      // const ground = BABYLON.Mesh.CreateGround("ground", 512, 512, 32, this.scene, false)
-      // ground.position.y = -1
-      // ground.material = groundMaterial
-
-      const sphereMaterial = new BABYLON.StandardMaterial("sphereMaterial", this.scene);
-      // sphereMaterial.diffuseTexture = new BABYLON.Texture("/a.jpg", this.scene);
-  
-      const sphere = BABYLON.Mesh.CreateSphere("sphere", 16, 10, this.scene);
-      sphere.position.y = 20;
-      sphere.material = sphereMaterial;
-        
-    }
+      BABYLON.MeshBuilder.CreateSphere("sphere", {diameter:2}, this.scene)
+      return scene
+    },
   }
 }
 </script>
