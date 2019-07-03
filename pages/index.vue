@@ -5,6 +5,9 @@
 
 <script>
 import * as BABYLON from 'babylonjs'
+import SkyImg from '~/assets/image/TropicalSunnyDay'
+import SandImg from '~/assets/image/sand.jpg'
+import { WaterMaterial } from 'babylonjs-materials';
 
 export default {
   components: {},
@@ -15,6 +18,8 @@ export default {
       scene: null,
       light1: null,
       light2: null,
+      skyImg: SkyImg,
+      sandImg: SandImg,
     }
   },
   mounted: function() {
@@ -25,8 +30,8 @@ export default {
       const _this = this
       this.canvas = this.$refs.canvas
       this.engine = new BABYLON.Engine(this.canvas, true)
-      this.scene = this.createScene()
-
+      this.createScene()
+ 
       this.engine.runRenderLoop(function () {
         _this.scene.render()
       })
@@ -35,23 +40,53 @@ export default {
       })        
     },
     createScene: function () {
-      const scene = new BABYLON.Scene(this.engine)
-      const camera = new BABYLON.ArcRotateCamera("Camera", Math.PI / 2, Math.PI / 2, 2, new BABYLON.Vector3(0, 0, 5), this.scene)
+      this.scene = new BABYLON.Scene(this.engine)
+      // this.scene.usedelayedtextureloading = true
+      const camera = new BABYLON.ArcRotateCamera("Camera", Math.PI / 2, Math.PI / 2, 2, new BABYLON.Vector3(0, 2, 5), this.scene)
       camera.attachControl(this.canvas, true)
 
       this.light1 = new BABYLON.HemisphericLight("light1", new BABYLON.Vector3(1, 1, 0), this.scene)
       this.light2 = new BABYLON.PointLight("light2", new BABYLON.Vector3(0, 1, -1), this.scene)
 
       BABYLON.MeshBuilder.CreateSphere("sphere", {diameter:2}, this.scene)
-      return scene
+      this.createGround()
+      // this.createSkybox()
+      this.createWater()
     },
+    // createSkybox: function () {
+    //   if (!this.scene.usedelayedtextureloading) {
+    //     const skybox = BABYLON.Mesh.CreateBox("skybox", 5000,0, this.scene)
+    //     const skyboxMaterial = new BABYLON.StandardMaterial("skybox", this.scene)
+    //     skyboxMaterial.backFaceCulling = false
+    //     skyboxMaterial.refractionTexture = new BABYLON.CubeTexture(this.skyImg, this.scene)
+    //     skyboxMaterial.reflectionTexture.coordinatesMode = BABYLON.Texture.SKYBOX_MODE
+    //     skyboxMaterial.diffuseColor = new BABYLON.Color3(0, 0, 0)
+    //     skyboxMaterial.specularColor = new BABYLON.Color3(0, 0, 0)
+    //     skyboxMaterial.disableLighting = true
+    //     skybox.material = skyboxMaterial
+    //   }
+    // },
+    createGround: function () {
+      const groundTexture = new BABYLON.Texture(this.sandImg, this.scene)
+
+      const groundMaterial = new BABYLON.StandardMaterial("groundMaterial", this.scene)
+      groundMaterial.diffuseTexture = groundTexture
+
+      const ground = BABYLON.Mesh.CreateGround("ground", 512, 512, 32, this.scene)
+      ground.material = groundMaterial
+    },
+    createWater: function () {
+      const waterMesh = BABYLON.Mesh.CreateGround("waterMesh", 512, 512, 32, this.scene, false)
+      const water = new WaterMaterial("water", this.scene, new BABYLON.Vector2(1024, 1024))
+      waterMesh.material = water
+    }
   }
 }
 </script>
 <style>
 #canvas {
-    width: 100%;
-    height: 100%;
-    touch-action: none;
+  width: 100%;
+  height: 100%;
+  touch-action: none;
 }
 </style>
