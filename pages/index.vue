@@ -53,19 +53,7 @@ export default {
       // this.createSkybox()
       this.createWater()
     },
-    // createSkybox: function () {
-    //   if (!this.scene.usedelayedtextureloading) {
-    //     const skybox = BABYLON.Mesh.CreateBox("skybox", 5000,0, this.scene)
-    //     const skyboxMaterial = new BABYLON.StandardMaterial("skybox", this.scene)
-    //     skyboxMaterial.backFaceCulling = false
-    //     skyboxMaterial.refractionTexture = new BABYLON.CubeTexture(this.skyImg, this.scene)
-    //     skyboxMaterial.reflectionTexture.coordinatesMode = BABYLON.Texture.SKYBOX_MODE
-    //     skyboxMaterial.diffuseColor = new BABYLON.Color3(0, 0, 0)
-    //     skyboxMaterial.specularColor = new BABYLON.Color3(0, 0, 0)
-    //     skyboxMaterial.disableLighting = true
-    //     skybox.material = skyboxMaterial
-    //   }
-    // },
+
     createGround: function () {
       const groundTexture = new BABYLON.Texture(this.sandImg, this.scene)
 
